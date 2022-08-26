@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:mynotes/constants/routes.dart';
 import 'package:mynotes/views/login_view.dart';
 import 'package:mynotes/views/register_view.dart';
 import 'package:mynotes/views/verify_email_view.dart';
@@ -16,9 +17,9 @@ void main() {
         ),
         home: const HomePage(),
         routes: {
-          '/login/': (context) => const LoginView(),
-          '/register/': (context) => const RegisterView(),
-          '/notes/': (context) => const NotesView(),
+          loginRoute: (context) => const LoginView(),
+          registerRoute: (context) => const RegisterView(),
+          notesRoute: (context) => const NotesView(),
         }),
   );
 }
@@ -31,7 +32,10 @@ class HomePage extends StatelessWidget {
     return FutureBuilder(
       future: Firebase.initializeApp(
           options: DefaultFirebaseOptions.currentPlatform),
-      builder: (context, snapshot) {
+      builder: (
+        context,
+        snapshot,
+      ) {
         switch (snapshot.connectionState) {
           case ConnectionState.done:
             final user = FirebaseAuth.instance.currentUser;
@@ -70,12 +74,13 @@ class _NotesViewState extends State<NotesView> {
         actions: [
           PopupMenuButton<MenuAction>(
             onSelected: (value) async {
-              switch(value){
+              switch (value) {
                 case MenuAction.logout:
                   final shouldLogout = await showLogOutDialog(context);
-                  if(shouldLogout){
+                  if (shouldLogout) {
                     await FirebaseAuth.instance.signOut();
-                    Navigator.of(context).pushNamedAndRemoveUntil("/login/", (route) => false);
+                    Navigator.of(context)
+                        .pushNamedAndRemoveUntil(loginRoute, (route) => false,);
                   }
                   break;
               }
