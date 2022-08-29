@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:mynotes/exstensions/list/filter.dart';
 import 'package:path/path.dart' show join;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -12,24 +13,40 @@ class NotesService {
 
   List<DatabaseNote> _notes = [];
 
+  DatabaseUser? _user;
+
   static final NotesService _shared = NotesService._sharedInstance();
-  NotesService._sharedInstance(){
-    _notesStreamController = StreamController<List<DatabaseNote>>.broadcast(onListen: (){
-     _notesStreamController.sink.add(_notes);
+  NotesService._sharedInstance() {
+    _notesStreamController =
+        StreamController<List<DatabaseNote>>.broadcast(onListen: () {
+      _notesStreamController.sink.add(_notes);
     });
   }
-  factory NotesService()=>_shared;
+  factory NotesService() => _shared;
 
-  late final  StreamController<List<DatabaseNote>> _notesStreamController;
+  late final StreamController<List<DatabaseNote>> _notesStreamController;
 
-  Stream<List<DatabaseNote>> get allNotes => _notesStreamController.stream;
+  Stream<List<DatabaseNote>> get allNotes => _notesStreamController.stream.filter((note) {
+    final currentUser = _user;
+    if(currentUser != null){
+      return note.userId == currentUser.id;
+    }else{
+      throw UserShouldBeSetBeforeReadingAllNotes();
+    }
+  });
 
-  Future<DatabaseUser> getOrCreateUser({required String email}) async {
+  Future<DatabaseUser> getOrCreateUser({required String email, bool setAsCurrentUser = true,}) async {
     try {
       final user = await getUser(email: email);
+      if(setAsCurrentUser){
+        _user = user;
+      }
       return user;
     } on CouldNotFindUser {
       final createdUser = await createUser(email: email);
+      if(setAsCurrentUser){
+        _user = createdUser;
+      }
       return createdUser;
     } catch (e) {
       rethrow;
@@ -50,6 +67,8 @@ class NotesService {
     await getNote(id: note.id);
     //Update db
     final updatesCount = await db.update(
+      where: "id = ?",
+      whereArgs: [note.id],
       noteTable,
       {
         textColumn: text,
@@ -315,7 +334,7 @@ const createUserTable = '''CREATE TABLE IF NOT EXISTS "user"(
         PRIMARY KEY("id" AUTOINCREMENT)
         );
       ''';
-const createNoteTable = '''CREATE TABLE "note" (
+const createNoteTable = '''CREATE TABLE IF NOT EXISTS "note" (
         "id"	INTEGER NOT NULL,
         "user_id"	INTEGER NOT NULL,
         "text"	TEXT,
