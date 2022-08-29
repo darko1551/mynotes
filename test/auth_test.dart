@@ -74,6 +74,7 @@ class NotInitializedException implements Exception {}
 class MockAuthProvider implements AuthProvider {
   AuthUser? _user;
   var _isInitialized = false;
+
   bool get isInitialized => _isInitialized;
 
   @override
@@ -111,6 +112,7 @@ class MockAuthProvider implements AuthProvider {
     const user = AuthUser(
       email: "foo@bar.com",
       isEmailVerified: false,
+      id: "my_id",
     );
     _user = user;
     return Future.value(user);
@@ -129,7 +131,11 @@ class MockAuthProvider implements AuthProvider {
     if (!isInitialized) throw NotInitializedException();
     final user = _user;
     if (user == null) throw UserNotFoundAuthException();
-    const newUser = AuthUser(email: "foo@bar.com", isEmailVerified: true,);
+    const newUser = AuthUser(
+      email: "foo@bar.com",
+      isEmailVerified: true,
+      id: "my_id",
+    );
     _user = newUser;
   }
 }
