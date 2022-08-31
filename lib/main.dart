@@ -23,10 +23,6 @@ void main() {
             create: (context) => AuthBloc(FirebaseAuthProvider()),
             child: const HomePage()),
         routes: {
-          loginRoute: (context) => const LoginView(),
-          registerRoute: (context) => const RegisterView(),
-          notesRoute: (context) => const NotesView(),
-          verifyEmailRoute: (context) => const VerifyEmailView(),
           createOrUpdateNoteRoute: (context) => const CreateUpdateNoteView(),
         }),
   );
@@ -38,7 +34,7 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     context.read<AuthBloc>().add(const AuthEventInitialize());
-    return BlocBuilder<AuthBloc,AuthState>(
+    return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         if (state is AuthStateLoggedIn) {
           return const NotesView();
@@ -46,7 +42,9 @@ class HomePage extends StatelessWidget {
           return const VerifyEmailView();
         } else if (state is AuthStateLoggedOut) {
           return const LoginView();
-        }else{
+        } else if (state is AuthStateRegistering) {
+          return const RegisterView();
+        } else {
           return const Scaffold(
             body: CircularProgressIndicator(),
           );
